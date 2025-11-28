@@ -14,9 +14,12 @@ import Achievements from '@/components/custom/Achievements';
 import Community from '@/components/custom/Community';
 import Profile from '@/components/custom/Profile';
 import MoodDiary from '@/components/custom/MoodDiary';
+import Challenges from '@/components/custom/Challenges';
+import AIRecommendations from '@/components/custom/AIRecommendations';
+import SmartNotifications from '@/components/custom/SmartNotifications';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('quiz');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const renderContent = () => {
     switch (activeTab) {
@@ -34,6 +37,12 @@ export default function Home() {
         return <Fasting />;
       case 'achievements':
         return <Achievements />;
+      case 'challenges':
+        return <Challenges />;
+      case 'ai-recommendations':
+        return <AIRecommendations />;
+      case 'notifications':
+        return <SmartNotifications />;
       case 'community':
         return <Community />;
       case 'profile':

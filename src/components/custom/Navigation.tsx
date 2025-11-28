@@ -2,7 +2,7 @@
 
 // Nutrivus.IA - Navigation Component
 
-import { Home, User, Camera, Activity, Droplet, Clock, Trophy, Users, ClipboardList, Sun, Moon, Heart } from 'lucide-react';
+import { Home, User, Camera, Activity, Droplet, Clock, Trophy, Users, ClipboardList, Sun, Moon, Heart, Target, Sparkles, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/ThemeProvider';
 
@@ -17,6 +17,9 @@ const navItems = [
   { id: 'meals', icon: Camera, label: 'Refeições' },
   { id: 'analysis', icon: Activity, label: 'Análise' },
   { id: 'mood', icon: Heart, label: 'Humor' },
+  { id: 'challenges', icon: Target, label: 'Desafios' },
+  { id: 'ai-recommendations', icon: Sparkles, label: 'IA' },
+  { id: 'notifications', icon: Bell, label: 'Notificações' },
   { id: 'hydration', icon: Droplet, label: 'Hidratação' },
   { id: 'fasting', icon: Clock, label: 'Jejum' },
   { id: 'achievements', icon: Trophy, label: 'Conquistas' },
