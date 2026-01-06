@@ -3,7 +3,7 @@
 // Nutrivus.IA - AI Recommendations Component
 
 import { useState } from 'react';
-import { Sparkles, TrendingUp, Apple, Droplet, Clock, Target, Brain, Lightbulb, ChevronRight, Star } from 'lucide-react';
+import { Sparkles, TrendingUp, Apple, Droplet, Clock, Target, Brain, Lightbulb, ChevronRight, Star, Check } from 'lucide-react';
 
 interface Recommendation {
   id: string;
@@ -19,6 +19,8 @@ interface Recommendation {
 
 export default function AIRecommendations() {
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [appliedRecommendations, setAppliedRecommendations] = useState<Set<string>>(new Set());
+  const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null);
 
   const recommendations: Recommendation[] = [
     {
@@ -93,6 +95,31 @@ export default function AIRecommendations() {
     ? recommendations 
     : recommendations.filter(r => r.type === selectedType);
 
+  const handleApplyRecommendation = (rec: Recommendation) => {
+    // Adiciona a recomendação ao conjunto de aplicadas
+    setAppliedRecommendations(prev => new Set(prev).add(rec.id));
+    
+    // Salva no localStorage
+    const appliedRecs = JSON.parse(localStorage.getItem('nutrivus_applied_recommendations') || '[]');
+    const newAppliedRec = {
+      id: rec.id,
+      title: rec.title,
+      actionable: rec.actionable,
+      appliedAt: new Date().toISOString(),
+      type: rec.type
+    };
+    appliedRecs.push(newAppliedRec);
+    localStorage.setItem('nutrivus_applied_recommendations', JSON.stringify(appliedRecs));
+    
+    // Mostra mensagem de sucesso
+    setShowSuccessMessage(rec.id);
+    
+    // Remove a mensagem após 3 segundos
+    setTimeout(() => {
+      setShowSuccessMessage(null);
+    }, 3000);
+  };
+
   const getImpactColor = (impact: string) => {
     switch (impact) {
       case 'high': return 'bg-red-500/20 text-red-400 border-red-500/30';
@@ -113,6 +140,19 @@ export default function AIRecommendations() {
 
   return (
     <div className="space-y-6 pb-24 md:pb-6">
+      {/* Success Message Toast */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top duration-300">
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            <Check className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="font-bold">Recomendação Aplicada!</p>
+            <p className="text-sm text-white/90">Acompanhe seu progresso no Dashboard</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -181,6 +221,8 @@ export default function AIRecommendations() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredRecommendations.map((rec) => {
           const Icon = rec.icon;
+          const isApplied = appliedRecommendations.has(rec.id);
+          
           return (
             <div
               key={rec.id}
@@ -223,9 +265,26 @@ export default function AIRecommendations() {
               </div>
 
               {/* Action Button */}
-              <button className="w-full mt-4 py-3 bg-gradient-to-r from-[#3F51B5] to-[#1E88E5] text-white font-medium rounded-xl hover:shadow-lg hover:shadow-[#3F51B5]/30 dark:hover:shadow-[#1E88E5]/30 transition-all duration-300 flex items-center justify-center gap-2 group-hover:scale-[1.02]">
-                Aplicar Recomendação
-                <ChevronRight className="w-4 h-4" />
+              <button 
+                onClick={() => handleApplyRecommendation(rec)}
+                disabled={isApplied}
+                className={`w-full mt-4 py-3 font-medium rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
+                  isApplied 
+                    ? 'bg-green-500/20 text-green-600 dark:text-green-400 border-2 border-green-500/30 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-[#3F51B5] to-[#1E88E5] text-white hover:shadow-lg hover:shadow-[#3F51B5]/30 dark:hover:shadow-[#1E88E5]/30 group-hover:scale-[1.02]'
+                }`}
+              >
+                {isApplied ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Recomendação Aplicada
+                  </>
+                ) : (
+                  <>
+                    Aplicar Recomendação
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
           );

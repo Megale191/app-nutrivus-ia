@@ -33,7 +33,11 @@ interface QuizData {
   email?: string;
 }
 
-export default function Quiz() {
+interface QuizProps {
+  onComplete?: () => void;
+}
+
+export default function Quiz({ onComplete }: QuizProps) {
   const [step, setStep] = useState(0);
   const [quizData, setQuizData] = useState<QuizData>({
     challenges: [],
@@ -44,6 +48,7 @@ export default function Quiz() {
 
   const totalSteps = 20;
 
+  // Efeito para atualizar progresso
   useEffect(() => {
     const questionSteps = [1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
     const currentQuestionIndex = questionSteps.indexOf(step);
@@ -51,6 +56,17 @@ export default function Quiz() {
       setProgress(((currentQuestionIndex + 1) / questionSteps.length) * 100);
     }
   }, [step]);
+
+  // Efeito para completar automaticamente após análise
+  useEffect(() => {
+    if (step === 22 && !isAnalyzing) {
+      const timer = setTimeout(() => {
+        handleCompleteQuiz();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [step, isAnalyzing]);
 
   const updateQuizData = (key: string, value: any) => {
     setQuizData(prev => ({ ...prev, [key]: value }));
@@ -68,11 +84,12 @@ export default function Quiz() {
 
   const nextStep = () => {
     if (step === 21) {
+      // Inicia análise após coletar email
       setIsAnalyzing(true);
       setTimeout(() => {
         setIsAnalyzing(false);
         setStep(22);
-      }, 4000);
+      }, 3000); // Reduzido para 3 segundos
     } else {
       setStep(prev => prev + 1);
     }
@@ -82,6 +99,16 @@ export default function Quiz() {
   const prevStep = () => {
     setStep(prev => prev - 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCompleteQuiz = () => {
+    // Salva dados do quiz no localStorage
+    localStorage.setItem('nutrivus_quiz_data', JSON.stringify(quizData));
+    
+    // Marca quiz como completo e chama callback
+    if (onComplete) {
+      onComplete();
+    }
   };
 
   const ProgressBar = () => (
@@ -523,7 +550,7 @@ export default function Quiz() {
     return null;
   }
 
-  // STEP 22: Loading
+  // STEP 22: Loading/Analysis - Agora completa automaticamente após análise
   if (step === 22 || isAnalyzing) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
@@ -549,141 +576,7 @@ export default function Quiz() {
               </div>
             ))}
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // STEP 23: Authority
-  if (step === 23) {
-    return (
-      <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-700 pt-20">
-        <div className="bg-gradient-to-br from-[#00FF00]/20 to-[#00CC00]/20 backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-[#00FF00]/20">
-          <div className="flex flex-col md:flex-row items-start gap-6">
-            <div className="p-4 bg-gradient-to-r from-[#00FF00] to-[#00CC00] rounded-full animate-pulse">
-              <Users className="w-8 h-8 text-[#00BFFF]" />
-            </div>
-            <div className="space-y-4 flex-1">
-              <h3 className="text-2xl md:text-3xl font-bold text-white">Junte-se a milhares de pessoas transformadas!</h3>
-              <p className="text-lg text-white/80 leading-relaxed">
-                O Nutrivus.IA já ajudou <span className="text-[#00FF00] font-semibold">mais de 50.000 pessoas</span> a atingirem seus objetivos. Nossos usuários relatam perda de <span className="text-[#00FF00] font-semibold">5-8 kg</span> nos primeiros 3 meses.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { icon: Star, label: 'Avaliação', value: '4.9/5.0' },
-                  { icon: Users, label: 'Usuários', value: '50k+' },
-                  { icon: Award, label: 'Sucesso', value: '87%' },
-                  { icon: Heart, label: 'Satisfação', value: '95%' }
-                ].map((stat) => {
-                  const Icon = stat.icon;
-                  return (
-                    <div key={stat.label} className="flex flex-col items-center gap-2 p-4 bg-[#00BFFF]/10 rounded-xl border border-[#00FF00]/20">
-                      <Icon className="w-6 h-6 text-[#00FF00]" />
-                      <div className="text-xl font-bold text-white">{stat.value}</div>
-                      <div className="text-xs text-white/60">{stat.label}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-        <Button onClick={nextStep} className="w-full bg-gradient-to-r from-[#00FF00] to-[#00CC00] text-[#00BFFF] hover:opacity-90 py-6 text-lg">
-          Ver Meu Plano
-          <ArrowRight className="ml-2 w-5 h-5" />
-        </Button>
-      </div>
-    );
-  }
-
-  // STEP 24: Results
-  if (step === 24) {
-    const bmi = quizData.currentWeight && quizData.height ? (parseFloat(quizData.currentWeight) / Math.pow(parseFloat(quizData.height) / 100, 2)).toFixed(1) : '0';
-    return (
-      <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700 pt-20">
-        <div className="text-center space-y-4">
-          <div className="inline-block p-4 bg-gradient-to-r from-[#00FF00] to-[#00CC00] rounded-full mb-4 animate-bounce">
-            <Award className="w-12 h-12 text-[#00BFFF]" />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white">Parabéns!</h1>
-          <p className="text-xl text-white/80">Criamos um plano alimentar personalizado para você.</p>
-        </div>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Target className="w-6 h-6 text-[#00FF00]" />
-              Seu Perfil
-            </h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Idade', value: `${quizData.age} anos` },
-                { label: 'Objetivo', value: quizData.mainGoal },
-                { label: 'Atividade', value: quizData.activityLevel },
-                { label: 'IMC', value: bmi }
-              ].map((item) => (
-                <div key={item.label} className="flex justify-between p-3 bg-white/5 rounded-lg">
-                  <span className="text-white/70">{item.label}:</span>
-                  <span className="text-white font-semibold">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-[#00FF00]/20 to-[#00CC00]/20 backdrop-blur-xl rounded-2xl p-6 border border-[#00FF00]/20">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-[#00FF00]" />
-              Recursos Exclusivos
-            </h3>
-            <ul className="space-y-3">
-              {['Acompanhamento diário', 'Receitas saudáveis', 'Suporte de nutricionistas', 'Análise com IA', 'Comunidade exclusiva', 'Gamificação'].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-white/80">
-                  <CheckCircle className="w-5 h-5 text-[#00FF00]" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <Button onClick={nextStep} className="w-full bg-gradient-to-r from-[#00FF00] to-[#00CC00] text-[#00BFFF] hover:opacity-90 py-6 text-lg">
-          Ver Oferta Especial
-          <ArrowRight className="ml-2 w-5 h-5" />
-        </Button>
-      </div>
-    );
-  }
-
-  // STEP 25: Final Offer
-  if (step === 25) {
-    return (
-      <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700 pt-20">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-white">
-            Comece Sua Transformação <span className="text-[#00FF00]">Hoje!</span>
-          </h1>
-        </div>
-        <div className="bg-gradient-to-br from-[#00FF00]/20 to-[#00CC00]/20 backdrop-blur-xl rounded-2xl p-8 md:p-12 border-2 border-[#00FF00]/40 relative">
-          <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Oferta Limitada!
-          </div>
-          <div className="text-center space-y-6">
-            <div>
-              <div className="text-white/60 line-through text-2xl">R$ 99,90</div>
-              <div className="text-6xl md:text-7xl font-bold text-white">R$ 49,90</div>
-              <div className="text-[#00FF00] text-2xl font-semibold">por mês</div>
-            </div>
-            <div className="space-y-3 max-w-md mx-auto">
-              {['Plano personalizado com IA', 'Análise de fotos', 'Acompanhamento', 'Controle de hidratação', 'Suporte 24/7', 'Comunidade', 'Gamificação', 'Atualizações'].map((feature) => (
-                <div key={feature} className="flex items-center gap-3 text-white/90 p-3 bg-white/5 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-[#00FF00]" />
-                  <span>{feature}</span>
-                </div>
-              ))}
-            </div>
-            <Button size="lg" className="bg-gradient-to-r from-[#00FF00] to-[#00CC00] text-[#00BFFF] hover:opacity-90 text-xl px-12 py-8 rounded-full shadow-2xl shadow-[#00FF00]/30 w-full md:w-auto">
-              Assinar Agora
-              <ArrowRight className="ml-2 w-6 h-6" />
-            </Button>
-          </div>
+          <p className="text-white/60 text-sm">Preparando seu acesso ao app...</p>
         </div>
       </div>
     );
